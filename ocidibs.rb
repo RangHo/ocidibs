@@ -85,6 +85,8 @@ puts instance.to_s
 
 loop do
   before_time = Time.now
+  
+  puts "[#{before_time.strftime '%F %R'}] Sending a request..."
 
   begin
     api = OCI::Core::ComputeClient.new
