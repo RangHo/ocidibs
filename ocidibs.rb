@@ -104,7 +104,7 @@ unless dry_run
   is_complete = retry_interval.nil?
   loop do
     before_time = Time.now
-    
+
     puts "[#{before_time.strftime '%F %R'}] Sending a request..."
 
     begin
