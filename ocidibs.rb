@@ -97,7 +97,11 @@ end.parse!
 puts 'This script will fire up an instance with the following settings:'
 puts instance.to_s
 
+puts '-' * 16
+puts 'Sending request now!'
+
 unless dry_run
+  is_complete = retry_interval.nil?
   loop do
     before_time = Time.now
     
@@ -108,15 +112,15 @@ unless dry_run
       api.launch_instance instance
       puts 'Successfully created an instance!'
 
-      unless retry_interval.nil?
+      unless is_complete
         puts 'Now this program will be terminated...'
-        break
+        is_complete = true
       end
     rescue OCI::Errors::ServiceError => e
-      puts "The request failed with an error: #{e.message}"
+      puts "[#{Time.now.strftime '%F %R'}] The request failed with an error: #{e.message}"
     end
 
-    break if retry_interval.nil?
+    break if is_complete
 
     wait_interval = retry_interval - (Time.now - before_time)
     sleep(wait_interval) if wait_interval.positive?
