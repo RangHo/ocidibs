@@ -9,6 +9,7 @@ gemfile do
   gem 'oci', require: 'oci'
 end
 
+require 'json'
 require 'securerandom'
 require 'optparse'
 
@@ -34,6 +35,19 @@ retry_interval = nil
 
 OptionParser.new do |opts|
   opts.banner = 'Usage: ocidibs.rb [options]'
+
+  opts.on('--request JSON', 'The raw JSON request payload from the web console.') do |content|
+    json_content = JSON.parse(content)
+    instance.availability_domain = json_content['availabilityDomain']
+    instance.compartment_id = json_content['compartmentId']
+    instance.display_name = json_content['displayName']
+    instance.image_id = json_content['sourceDetails']['imageId']
+    instance.shape = json_content['shape']
+    instance.shape_config.ocpus = json_content['shapeConfig']['ocpus']
+    instance.shape_config.memory_in_gbs = json_content['shapeConfig']['memoryInGBs']
+    instance.create_vnic_details.subnet_id = json_content['createVnicDetails']['subnetId']
+    instance.metadata['ssh_authorized_keys'] = json_content['metadata']['ssh_authorized_keys']
+  end
 
   opts.on('--availability-domain DOMAIN', 'The ID of the Availability Domain of the region.') do |ad|
     instance.availability_domain = ad
@@ -83,26 +97,28 @@ end.parse!
 puts 'This script will fire up an instance with the following settings:'
 puts instance.to_s
 
-loop do
-  before_time = Time.now
-  
-  puts "[#{before_time.strftime '%F %R'}] Sending a request..."
+unless dry_run
+  loop do
+    before_time = Time.now
+    
+    puts "[#{before_time.strftime '%F %R'}] Sending a request..."
 
-  begin
-    api = OCI::Core::ComputeClient.new
-    api.launch_instance instance
-    puts 'Successfully created an instance!'
+    begin
+      api = OCI::Core::ComputeClient.new
+      api.launch_instance instance
+      puts 'Successfully created an instance!'
 
-    unless retry_interval.nil?
-      puts 'Now this program will be terminated...'
-      break
+      unless retry_interval.nil?
+        puts 'Now this program will be terminated...'
+        break
+      end
+    rescue OCI::Errors::ServiceError => e
+      puts "The request failed with an error: #{e.message}"
     end
-  rescue OCI::Errors::ServiceError => error
-    puts "The request failed with an error: #{error.message}"
+
+    break if retry_interval.nil?
+
+    wait_interval = retry_interval - (Time.now - before_time)
+    sleep(wait_interval) if wait_interval.positive?
   end
-
-  break if retry_interval.nil?
-
-  wait_interval = retry_interval - (Time.now - before_time)
-  sleep(wait_interval) if wait_interval.positive?
-end unless dry_run
+end
