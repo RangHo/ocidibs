@@ -95,7 +95,7 @@ OptionParser.new do |opts|
 end.parse!
 
 puts 'This script will fire up an instance with the following settings:'
-puts instance.to_s
+puts instance
 
 puts '-' * 16
 puts 'Sending request now!'
