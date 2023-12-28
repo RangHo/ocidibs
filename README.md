@@ -43,6 +43,37 @@ Usage: ocidibs.rb [options]
   --retry SECONDS              Automatically retry the same request
 ```
 
+For a containerized approach, replace the `ruby ocidibs.rb` part with the `run`
+command of your favorite OCI runtime:
+
+```
+# docker build --tag rangho/ocidibs .
+  ...
+
+# docker run --rm -it \
+>   -v /path/to/oci/config:/config \
+>   -v /path/to/sdk/cert:/path/to/config/cert \
+>   rangho/ocidibs --help
+Usage: ocidibs.rb [options]
+  --request JSON               The raw JSON request payload from the web console.
+  --availability-domain DOMAIN The ID of the Availability Domain of the region.
+  --compartment-id COMPARTMENT The compartment ID of the instance.
+  --display-name NAME          The name of your instance. A random name will be created if none specified.
+  --image-id ID                The OCID of the image to use.
+  --shape SHAPE                The shape of the instance. Default is VM.Standard.A1.Flex.
+  --ocpus COUNT                Number of OCPU cores. Default is 4.
+  --memory-in-gbs SIZE         Size of the RAM, in GBs. Default is 24.
+  --subnet-id ID               The OCID of the subnet to use. You may need to create a subnet first.
+  --ssh-public-key KEYFILE     The SSH public key file to use when connecting to the new instance.
+  --dry-run                    Don't actually send a request to Oracle Cloud.
+  --retry SECONDS              Automatically retry the same request
+```
+
+You must provide the `/config` file, which is the OCI configuration file that
+normally goes in `~/.oci/config`.
+Make sure to mount the SDK key file to wherever your configuration requires it
+to be as well.
+
 ### Manual information gathering
 
 > **Note** \
